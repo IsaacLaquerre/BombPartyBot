@@ -8,6 +8,7 @@ const clear = require("clear-console");
 keyboard.config.autoDelayMs = 0;
 
 var words;
+var wordBank;
 var username;
 
 var wins = 0;
@@ -18,7 +19,8 @@ var typing = false;
 var missingLetters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"];
 
 fs.readFile("./words.txt", "utf8", (err, data) => {
-    words = data.toLowerCase().split("\r\n");
+    wordBank = data.toLowerCase().split("\r\n");
+    words = wordBank;
     (async() => {
         const lobby = await prompts({
             type: "text",
@@ -63,7 +65,7 @@ fs.readFile("./words.txt", "utf8", (err, data) => {
                         console.log("\x1b[32m√ \x1b[0mBound to game board");
 
                         frame.waitForSelector(".player, .status").then(async() => {
-                            console.log("\x1b[32m√ \x1b[0mLooking for player \"" + username + "\"...");
+                            console.log("\x1b[32m√ \x1b[0mFound player \"" + username + "\"");
 
                             setInterval(async() => {
                                 await frame.evaluate(() => {
@@ -79,7 +81,9 @@ fs.readFile("./words.txt", "utf8", (err, data) => {
                                             if (data.winner === username) wins++;
                                             else losses++;
 
-                                            console.log("\x1b[33m- \x1b[0mWins: \x1b[32m" + wins + "\x1b[0m, Losses: \x1b[31m" + losses + "\x1b[0m");
+                                            words = wordBank;
+
+                                            console.log("Game over, reset word bank\n\x1b[33m- \x1b[0mWins: \x1b[32m" + wins + "\x1b[0m, Losses: \x1b[31m" + losses + "\x1b[0m");
 
                                             robot.mouseClick();
                                         }
@@ -89,7 +93,7 @@ fs.readFile("./words.txt", "utf8", (err, data) => {
                                         if (!typing) newSyllable(frame, words);
                                     }
                                 });
-                            }, 1000);
+                            }, 500);
                         });
                     });
                 });
@@ -99,13 +103,6 @@ fs.readFile("./words.txt", "utf8", (err, data) => {
 });
 
 async function newSyllable(frame, words) {
-
-    // var response = await prompts({
-    //     type: "text",
-    //     name: "value",
-    //     message: "Press enter to start next word search..."
-    // });
-    // enofgif (response.value != "" && (!response.value || response.value.toLowerCase() === "q" || response.value.toLowerCase() === "quit" || response.value.toLowerCase === "exit")) return process.exit();
 
     typing = true;
 
@@ -126,7 +123,10 @@ async function newSyllable(frame, words) {
 
 function findWord(frame, words) {
     return new Promise(async(resolve, reject) => {
-        if (missingLetters.length === 0) missingLetters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"];
+        if (missingLetters.length === 0) {
+            console.log("\x1b[0m♥ \x1b[31mGained a life");
+            missingLetters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"];
+        }
 
         frame.waitForSelector("div.syllable").then(async() => {
             await frame.evaluate("document.querySelector('div.syllable').innerText").then(syllable => {
